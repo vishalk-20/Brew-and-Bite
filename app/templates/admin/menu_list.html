@@ -1,0 +1,88 @@
+{% extends "admin/base.html" %}
+{% block page_title %}Manage Menu{% endblock %}
+
+{% block admin_content %}
+<div class="toolbar">
+  <form method="get" action="{{ url_for('admin.menu_list') }}" class="search-form">
+    <input type="search" name="search" placeholder="Search items…" value="{{ search or '' }}" />
+    <select name="category_id">
+      <option value="">All categories</option>
+      {% for c in categories %}
+        <option value="{{ c.id }}" {% if category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    {% if search or category_id %}
+      <a href="{{ url_for('admin.menu_list') }}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+  <a href="{{ url_for('admin.menu_add') }}" class="btn btn-success">+ Add Menu Item</a>
+</div>
+
+<div class="table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Image</th>
+        <th>Name</th>
+        <th>Category</th>
+        <th>Description</th>
+        <th>Price</th>
+        <th>Veg</th>
+        <th>Availability</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in products %}
+      <tr>
+        <td>
+          {% if p.image %}
+            <img src="{{ url_for('static', filename='uploads/' + p.image) }}" alt="{{ p.name }}" class="item-img" />
+          {% else %}
+            <span class="img-placeholder">&#8212;</span>
+          {% endif %}
+        </td>
+        <td><strong>{{ p.name }}</strong></td>
+        <td>{{ p.category.name if p.category else '&#8212;' }}</td>
+        <td>{{ p.description or '&#8212;' }}</td>
+        <td>&#8377;{{ "%.2f"|format(p.price) }}</td>
+        <td><span class="badge badge-veg">{{ 'Yes' if p.is_vegetarian else 'No' }}</span></td>
+        <td>
+          <span class="badge {% if p.is_available %}badge-available{% else %}badge-unavailable{% endif %}">
+            {{ 'Available' if p.is_available else 'Unavailable' }}
+          </span>
+        </td>
+        <td class="actions">
+          <a href="{{ url_for('admin.menu_edit', id=p.id) }}" class="btn btn-sm btn-outline">Edit</a>
+          <form method="post" action="{{ url_for('admin.menu_delete', id=p.id) }}" style="display:inline;" onsubmit="return confirm('Disable \"{{ p.name }}\"? Historical orders will be preserved.')">
+            <button type="submit" class="btn btn-sm btn-danger">Disable</button>
+          </form>
+          <form method="post" action="{{ url_for('admin.toggle_availability', id=p.id) }}" style="display:inline;">
+            <button type="submit" class="btn btn-sm {% if p.is_available %}btn-warning{% else %}btn-success{% endif %}">
+              {{ 'Mark Unavailable' if p.is_available else 'Mark Available' }}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="8" class="empty">No menu items found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.menu_list', page=pagination.prev_num, search=search, category_id=category_id) }}" class="btn btn-ghost btn-sm">Prev</a>
+  {% endif %}
+  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('admin.menu_list', page=pagination.next_num, search=search, category_id=category_id) }}" class="btn btn-ghost btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

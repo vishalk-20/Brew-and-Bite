@@ -1,0 +1,31 @@
+{% extends "admin/base.html" %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total menu items</div>
+    <div class="stat-value">{{ total_items }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Available</div>
+    <div class="stat-value success">{{ available_items }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Unavailable</div>
+    <div class="stat-value danger">{{ unavailable_items }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total categories</div>
+    <div class="stat-value">{{ total_categories }}</div>
+  </div>
+</div>
+
+<div class="quick-actions">
+  <h2>Quick actions</h2>
+  <div class="action-grid">
+    <a href="{{ url_for('admin.menu_add') }}" class="btn btn-primary">Add Menu Item</a>
+    <a href="{{ url_for('admin.menu_list') }}" class="btn btn-outline">Manage Menu</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "admin/base.html" %}
+{% block page_title %}{{ action }} Menu Item{% endblock %}
+
+{% block admin_content %}
+<div class="form-card">
+  <h2>{{ action }} Menu Item</h2>
+  <form method="post" enctype="multipart/form-data" class="menu-form">
+    <div class="form-grid">
+      <div class="field">
+        <label>Product name <span class="small" style="color:var(--danger);">*</span></label>
+        <input type="text" name="name" value="{{ product.name if product else '' }}" required />
+      </div>
+      <div class="field span-2">
+        <label>Description <span class="small" style="color:var(--danger);">*</span></label>
+        <textarea name="description" rows="3" required>{{ product.description if product else '' }}</textarea>
+      </div>
+      <div class="field">
+        <label>Category <span class="small" style="color:var(--danger);">*</span></label>
+        <select name="category_id" required>
+          <option value="">Select a category</option>
+          {% for c in categories %}
+            <option value="{{ c.id }}" {% if product and product.category_id == c.id %}selected{% endif %}>{{ c.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Price (&#8377;) <span class="small" style="color:var(--danger);">*</span></label>
+        <input type="number" name="price" step="0.01" min="0.01" value="{{ '%.2f'|format(product.price) if product and product.price else '' }}" required />
+      </div>
+      <div class="field">
+        <label>Product image</label>
+        <input type="file" name="image" accept="image/jpeg,image/png,image/webp" {% if not product %}required{% endif %} />
+        {% if product and product.image %}
+          <p class="hint">Current: {{ product.image }}</p>
+        {% endif %}
+        <p class="hint">Allowed types: JPG, JPEG, PNG, WEBP.</p>
+      </div>
+    </div>
+
+    <div class="field toggles">
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_vegetarian" {% if product and product.is_vegetarian %}checked{% endif %} disabled />
+        Vegetarian (all items must be vegetarian)
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="is_available" {% if product and product.is_available %}checked{% endif %} />
+        Available for ordering
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a href="{{ url_for('admin.menu_list') }}" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary">{{ action }} Item</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block body_class %}customer-page{% endblock %}
+{% block title %}My Account | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="customer-page">
+  <div class="customer-hero">
+    <div class="hero-text">
+      <h1>Welcome back, {{ current_user.name }}!</h1>
+      <p>Here&rsquo;s your account dashboard. Browse our menu, place an order, or manage your profile.</p>
+    </div>
+  </div>
+
+  <div class="customer-grid">
+    <div class="customer-card">
+      <h2>Browse Menu</h2>
+      <p>View our full menu of pizzas, burgers, shakes, beverages, desserts and snacks.</p>
+      <a href="{{ url_for('main.index') }}" class="btn btn-primary">View Menu</a>
+    </div>
+
+    <div class="customer-card">
+      <h2>Your Profile</h2>
+      <p>
+        <strong>Name:</strong> {{ current_user.name }}<br />
+        <strong>Email:</strong> {{ current_user.email }}<br />
+        <strong>Phone:</strong> {{ current_user.phone or '&#8212;' }}<br />
+        <strong>Role:</strong> Customer<br />
+        <strong>Member since:</strong> {{ current_user.created_at.strftime('%B %Y') if current_user.created_at else '&#8212;' }}
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

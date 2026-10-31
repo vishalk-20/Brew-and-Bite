@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% set active = request.endpoint %}
+
+{% block body_class %}admin-page{% endblock %}
+
+{% block content %}
+<div class="admin-sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+<div class="admin-shell">
+  <aside class="admin-sidebar" id="adminSidebar">
+    <div class="admin-brand">
+      <div>
+        <div class="brand-name">Brew &amp; Bite</div>
+        <div class="brand-sub">Admin Panel</div>
+      </div>
+    </div>
+    <nav class="admin-nav">
+      <a href="{{ url_for('admin.dashboard') }}" class="nav-link {% if active == 'admin.dashboard' %}active{% endif %}">
+        Dashboard
+      </a>
+      <a href="{{ url_for('admin.menu_list') }}" class="nav-link {% if active == 'admin.menu_list' or active == 'admin.menu_edit' %}active{% endif %}">
+        Manage Menu
+      </a>
+      <a href="{{ url_for('admin.menu_add') }}" class="nav-link {% if active == 'admin.menu_add' %}active{% endif %}">
+        Add Menu Item
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="nav-link nav-logout">
+        Logout
+      </a>
+    </nav>
+  </aside>
+
+  <div class="admin-main">
+    <header class="admin-header">
+      <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu">Menu</button>
+      <h1 class="admin-title">{% block page_title %}Admin{% endblock %}</h1>
+    </header>
+    <main class="admin-content">
+      {% block admin_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var btn = document.getElementById('mobileMenuBtn');
+    var sidebar = document.getElementById('adminSidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (!btn || !sidebar || !overlay) return;
+    function openMenu() {
+      sidebar.classList.add('open');
+      overlay.classList.add('open');
+      btn.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+      btn.setAttribute('aria-expanded', 'false');
+    }
+    btn.addEventListener('click', openMenu);
+    overlay.addEventListener('click', closeMenu);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block body_class %}auth-page{% endblock %}
+{% block title %}Create an account | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-brand">Brew &amp; Bite</div>
+    <h2>Create an account</h2>
+    <p>Join Brew & Bite as a customer. Admin accounts are created by the system only.</p>
+
+    <form method="post" class="auth-form" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <div class="field">
+        <label for="name">Full name</label>
+        <input type="text" id="name" name="name" required autocomplete="name"
+               placeholder="e.g. Maya Patel" />
+      </div>
+
+      <div class="field">
+        <label for="email">Email address</label>
+        <input type="email" id="email" name="email" required autocomplete="email"
+               placeholder="you@example.com" />
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone number</label>
+        <input type="tel" id="phone" name="phone" required autocomplete="tel"
+               placeholder="+1 555-0123" />
+      </div>
+
+      <div class="field password-field">
+        <label for="password">Password</label>
+        <div class="input-with-toggle">
+          <input type="password" id="password" name="password" required
+                 autocomplete="new-password" placeholder="••••••••" />
+          <button type="button" class="password-toggle" data-target="password"
+                  aria-label="Show password" title="Show password">Show</button>
+        </div>
+        <p class="hint">At least 8 characters.</p>
+      </div>
+
+      <div class="field password-field">
+        <label for="confirm_password">Confirm password</label>
+        <div class="input-with-toggle">
+          <input type="password" id="confirm_password" name="confirm_password" required
+                 autocomplete="new-password" placeholder="••••••••" />
+          <button type="button" class="password-toggle" data-target="confirm_password"
+                  aria-label="Show password" title="Show password">Show</button>
+        </div>
+      </div>
+
+      <div class="field terms-field">
+        <label class="checkbox-label" for="terms">
+          <input type="checkbox" id="terms" name="terms" required />
+          I accept the <a href="#">Terms and Conditions</a>
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-primary full">Create account</button>
+    </form>
+
+    <p class="auth-footer">Already have an account? <a href="{{ url_for('auth.login') }}">Log in</a></p>
+  </div>
+</div>
+
+<script>
+  document.querySelectorAll('.password-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const input = document.getElementById(this.getAttribute('data-target'));
+      if (!input) return;
+      const isPassword = input.type === 'password';
+      input.type = isPassword ? 'text' : 'password';
+      this.textContent = isPassword ? 'Hide' : 'Show';
+      this.setAttribute('aria-label', isPassword ? 'Hide password' : 'Show password');
+    });
+  });
+</script>
+{% endblock %}
