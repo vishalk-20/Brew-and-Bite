@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block body_class %}confirmation-page{% endblock %}
+{% block title %}Order Confirmed | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+  <div class="checkout-header">
+    <h1>Order confirmed!</h1>
+    <p class="text-muted">Thank you for your order, {{ order.customer_name }}.</p>
+  </div>
+
+  <div class="checkout-grid">
+    <!-- Order summary -->
+    <div class="checkout-summary">
+      <h2>Your order</h2>
+      <div class="order-items">
+        {% for item in order.items %}
+        <div class="order-item">
+          <div class="order-item-image-wrap">
+            {% if item.product and item.product.image %}
+              <img
+                src="{{ url_for('static', filename='uploads/' + item.product.image) }}"
+                alt="{{ item.product_name }}"
+                class="order-item-image"
+              />
+            {% endif %}
+            <div
+              class="img-placeholder"
+              style="display: {% if item.product and item.product.image %}none{% else %}flex{% endif %};"
+            >
+              &#8212;
+            </div>
+          </div>
+          <div class="order-item-details">
+            <h3>{{ item.product_name }}</h3>
+            {% if item.special_instructions %}
+              <p class="special-instructions">{{ item.special_instructions }}</p>
+            {% endif %}
+            <p class="order-item-meta">
+              &#8377;{{ "%.2f"|format(item.unit_price) }} &times; {{ item.quantity }}
+            </p>
+          </div>
+          <span class="order-item-price">
+            &#8377;{{ "%.2f"|format(item.subtotal) }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="order-totals">
+        <div class="order-totals-row">
+          <span>Cart subtotal</span>
+          <span>&#8377;{{ "%.2f"|format(order.subtotal) }}</span>
+        </div>
+        <div class="order-totals-row">
+          <span>Delivery fee</span>
+          <span>&#8377;{{ "%.2f"|format(order.delivery_fee) }}</span>
+        </div>
+        <div class="order-totals-row total">
+          <span>Total amount</span>
+          <span>&#8377;{{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+      </div>
+
+      <div class="payment-method">
+        <h3>Payment</h3>
+        <p><strong>Cash on Delivery</strong></p>
+        <p class="text-muted">
+          Payment status: <strong>Pending</strong> &mdash; pay in cash on delivery.
+        </p>
+      </div>
+    </div>
+
+    <!-- Delivery address -->
+    <div class="checkout-form">
+      <h2>Delivery address</h2>
+      <p>
+        <strong>{{ order.customer_name }}</strong><br />
+        {{ order.delivery_address }}
+        {% if order.landmark %}<br />(<span class="text-muted">Landmark: {{ order.landmark }}</span>){% endif %}<br />
+        {{ order.city }}, {{ order.state }} &mdash; {{ order.pin_code }}
+      </p>
+      <p>
+        <strong>Phone:</strong> {{ order.phone }}<br />
+        {% if order.delivery_instructions %}
+          <strong>Delivery instructions:</strong> {{ order.delivery_instructions }}<br />
+        {% endif %}
+        <strong>Placed on:</strong>
+        {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else '&#8212;' }}
+      </p>
+
+      <div class="form-actions" style="margin-top: 24px;">
+        <a href="{{ url_for('main.menu') }}" class="btn btn-primary btn-full">Back to menu</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="order-status" style="margin-top: 32px; padding: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);">
+    <h2 style="margin-top: 0;">Order status</h2>
+    <div class="order-totals-row">
+      <span>Order number</span>
+      <span><strong>{{ order.order_number }}</strong></span>
+    </div>
+    <div class="order-totals-row">
+      <span>Order status</span>
+      <span><strong>{{ order.order_status | capitalize }}</strong></span>
+    </div>
+    <div class="order-totals-row">
+      <span>Payment status</span>
+      <span><strong>{{ order.payment_status | capitalize }}</strong></span>
+    </div>
+  </div>
+</div>
+{% endblock %}

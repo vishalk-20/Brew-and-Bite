@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block body_class %}cart-page{% endblock %}
+{% block title %}Your Cart | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+  <div class="cart-header">
+    <h1>Your Cart</h1>
+    <p class="text-muted">Review your items before checking out.</p>
+  </div>
+
+  {% if unavailable_items %}
+  <div class="cart-unavailable-warning">
+    <p>
+      <strong>Heads up:</strong> the following item(s) in your cart are no
+      longer available and cannot be checked out:
+    </p>
+    <ul class="text-muted">
+      {% for item in unavailable_items %}
+        <li>{{ item.product.name }}</li>
+      {% endfor %}
+    </ul>
+    <p>
+      You can remove them below or continue shopping to replace them.
+    </p>
+  </div>
+  {% endif %}
+
+  {% if cart.items %}
+  <div class="cart-items">
+    {% for item in cart.items %}
+    <article class="cart-item">
+      <div class="cart-item-image-wrap">
+        {% if item.product.image %}
+          <img
+            src="{{ url_for('static', filename='uploads/' + item.product.image) }}"
+            alt="{{ item.product.name }}"
+            class="cart-item-image"
+            onerror="this.style.display='none'; var ph=this.parentElement.querySelector('.img-placeholder'); if(ph){ph.style.display='flex';}"
+          />
+        {% endif %}
+        <div
+          class="img-placeholder"
+          style="display: {% if item.product.image %}none{% else %}flex{% endif %};"
+        >
+          &#8212;
+        </div>
+      </div>
+      <div class="cart-item-details">
+        <h3>{{ item.product.name }}</h3>
+        <p class="cart-item-price">&#8377;{{ "%.2f"|format(item.product.price) }}</p>
+      </div>
+      <div class="cart-item-actions">
+        <form
+          method="post"
+          action="{{ url_for('cart.update_quantity', item_id=item.id) }}"
+          class="qty-control"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button
+            type="submit"
+            class="qty-btn"
+            name="quantity"
+            value="{{ item.quantity - 1 }}"
+            title="Decrease quantity"
+            {% if item.quantity <= 1 %}disabled{% endif %}
+          >
+            &#8722;
+          </button>
+          <span class="qty-value">{{ item.quantity }}</span>
+          <button
+            type="submit"
+            class="qty-btn"
+            name="quantity"
+            value="{{ item.quantity + 1 }}"
+            title="Increase quantity"
+          >
+            &#43;
+          </button>
+        </form>
+        <span class="item-subtotal">
+          &#8377;{{ "%.2f"|format(item.subtotal) }}
+        </span>
+        <form
+          method="post"
+          action="{{ url_for('cart.remove_item', item_id=item.id) }}"
+          style="display: inline;"
+          onsubmit="return confirm('Remove {{ item.product.name }} from your cart?')"
+        >
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+        </form>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+
+  <div class="cart-summary">
+    <div class="cart-summary-row">
+      <span>Items</span>
+      <span>{{ cart.item_count }}</span>
+    </div>
+    <div class="cart-summary-row total">
+      <span>Subtotal</span>
+      <span>&#8377;{{ "%.2f"|format(cart.subtotal) }}</span>
+    </div>
+  </div>
+
+  <div class="cart-actions">
+    <a href="{{ url_for('main.menu') }}" class="btn btn-ghost">Continue Shopping</a>
+    {% if unavailable_items %}
+      <button class="btn btn-primary" disabled>Proceed to Checkout</button>
+      <p class="small text-muted" style="margin-top: 8px;">Remove unavailable items before checking out.</p>
+    {% else %}
+      <a href="{{ url_for('orders.checkout') }}" class="btn btn-primary">Proceed to Checkout</a>
+    {% endif %}
+  </div>
+
+  {% else %}
+  <div class="cart-empty">
+    <h2>Your cart is empty</h2>
+    <p>Looks like you haven't added anything yet. Explore our menu and add your favourites.</p>
+    <a href="{{ url_for('main.menu') }}" class="btn btn-primary">Browse Menu</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+{% block body_class %}checkout-page{% endblock %}
+{% block title %}Checkout | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+  <div class="checkout-header">
+    <h1>Checkout</h1>
+    <p class="text-muted">Review your order and enter your delivery details.</p>
+  </div>
+
+  <form method="post" class="checkout-form" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+    <div class="checkout-grid">
+      <!-- Order summary -->
+      <div class="checkout-summary">
+        <h2>Order summary</h2>
+        <div class="order-items">
+          {% for item in cart.items %}
+          <div class="order-item">
+            <div class="order-item-image-wrap">
+              {% if item.product.image %}
+                <img
+                  src="{{ url_for('static', filename='uploads/' + item.product.image) }}"
+                  alt="{{ item.product.name }}"
+                  class="order-item-image"
+                  onerror="this.style.display='none'; var ph=this.parentElement.querySelector('.img-placeholder'); if(ph){ph.style.display='flex';}"
+                />
+              {% endif %}
+              <div
+                class="img-placeholder"
+                style="display: {% if item.product.image %}none{% else %}flex{% endif %};"
+              >
+                &#8212;
+              </div>
+            </div>
+            <div class="order-item-details">
+              <h3>{{ item.product.name }}</h3>
+              {% if item.notes %}
+                <p class="special-instructions">{{ item.notes }}</p>
+              {% endif %}
+              <p class="order-item-meta">
+                &#8377;{{ "%.2f"|format(item.product.price) }} &times; {{ item.quantity }}
+              </p>
+            </div>
+            <span class="order-item-price">
+              &#8377;{{ "%.2f"|format(item.subtotal) }}
+            </span>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="order-totals">
+          <div class="order-totals-row">
+            <span>Cart subtotal</span>
+            <span>&#8377;{{ "%.2f"|format(subtotal) }}</span>
+          </div>
+          <div class="order-totals-row">
+            <span>Delivery fee</span>
+            <span>&#8377;{{ "%.2f"|format(delivery_fee) }}</span>
+          </div>
+          <div class="order-totals-row total">
+            <span>Total</span>
+            <span>&#8377;{{ "%.2f"|format(total) }}</span>
+          </div>
+        </div>
+
+        <div class="payment-method">
+          <h3>Payment method</h3>
+          <p><strong>Cash on Delivery</strong></p>
+          <p class="text-muted">
+            Payment status: <strong>Pending</strong> &mdash; you will pay in cash
+            when your order is delivered.
+          </p>
+        </div>
+      </div>
+
+      <!-- Delivery details form -->
+      <div class="checkout-form">
+        <h2>Delivery details</h2>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% for category, message in messages %}
+            <div class="flash flash-{{ category }}">{{ message }}</div>
+          {% endfor %}
+        {% endwith %}
+
+        <div class="field">
+          <label for="customer_name">Full name <span class="text-muted">(required)</span></label>
+          <input
+            type="text"
+            id="customer_name"
+            name="customer_name"
+            value="{{ form_defaults.customer_name }}"
+            required
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone number <span class="text-muted">(required)</span></label>
+          <input
+            type="tel"
+            id="phone"
+            name="phone"
+            value="{{ form_defaults.phone }}"
+            required
+            autocomplete="tel"
+            placeholder="e.g. 9876543210 or +91 98765 43210"
+          />
+          <p class="hint">Indian mobile number (10 digits).</p>
+        </div>
+
+        <div class="field span-2">
+          <label for="delivery_address">Delivery address <span class="text-muted">(required)</span></label>
+          <input
+            type="text"
+            id="delivery_address"
+            name="delivery_address"
+            value="{{ form_defaults.delivery_address }}"
+            required
+            autocomplete="street-address"
+            placeholder="House/flat number, street, building"
+          />
+        </div>
+
+        <div class="field">
+          <label for="landmark">Landmark (optional)</label>
+          <input
+            type="text"
+            id="landmark"
+            name="landmark"
+            value="{{ form_defaults.landmark }}"
+            autocomplete="address-line2"
+            placeholder="e.g. Near HDFC Bank"
+          />
+        </div>
+
+        <div class="field">
+          <label for="city">City <span class="text-muted">(required)</span></label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value="{{ form_defaults.city }}"
+            required
+            autocomplete="address-level2"
+          />
+        </div>
+
+        <div class="field">
+          <label for="state">State <span class="text-muted">(required)</span></label>
+          <input
+            type="text"
+            id="state"
+            name="state"
+            value="{{ form_defaults.state }}"
+            required
+            autocomplete="address-level1"
+          />
+        </div>
+
+        <div class="field">
+          <label for="pin_code">PIN code <span class="text-muted">(required)</span></label>
+          <input
+            type="text"
+            id="pin_code"
+            name="pin_code"
+            value="{{ form_defaults.pin_code }}"
+            required
+            autocomplete="postal-code"
+            placeholder="e.g. 110001"
+          />
+          <p class="hint">Six-digit PIN code.</p>
+        </div>
+
+        <div class="field span-2">
+          <label for="delivery_instructions">Additional delivery instructions (optional)</label>
+          <textarea
+            id="delivery_instructions"
+            name="delivery_instructions"
+            rows="3"
+            autocomplete="off"
+            placeholder="e.g. Please call before arriving, leave at reception"
+          >{{ form_defaults.delivery_instructions }}</textarea>
+        </div>
+
+        <div class="form-actions">
+          <a href="{{ url_for('cart.view_cart') }}" class="btn btn-ghost">Back to cart</a>
+          <button type="submit" class="btn btn-primary btn-full">Place order &mdash; &#8377;{{ "%.2f"|format(total) }}</button>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}

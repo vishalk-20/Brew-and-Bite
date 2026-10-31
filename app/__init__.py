@@ -1,7 +1,9 @@
 import os
 import click
-from flask import Flask
+import secrets
+from flask import Flask, session
 from sqlalchemy import text, inspect
+from flask_login import current_user
 from app.extensions import db, login_manager
 
 
@@ -16,6 +18,8 @@ def create_app():
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         UPLOAD_FOLDER=os.path.join(basedir, 'app', 'static', 'uploads'),
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,
+        # Configurable delivery fee (in rupees) applied to every order.
+        DELIVERY_FEE=os.environ.get("DELIVERY_FEE", "40.00"),
         # Secure session settings.
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
@@ -29,7 +33,7 @@ def create_app():
     db.init_app(app)
     login_manager.init_app(app)
 
-    from app.models import User, Category, Product
+    from app.models import User, Category, Product, Cart, Order, OrderItem
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -38,10 +42,31 @@ def create_app():
     from app.auth.routes import auth_bp
     from app.admin.routes import admin_bp
     from app.main.routes import main_bp
+    from app.cart.routes import cart_bp
+    from app.orders.routes import orders_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(main_bp)
+    app.register_blueprint(cart_bp)
+    app.register_blueprint(orders_bp)
+
+    @app.context_processor
+    def inject_cart():
+        """Inject cart count and CSRF token into every template context."""
+        if "_csrf_token" not in session:
+            session["_csrf_token"] = secrets.token_hex(32)
+
+        def csrf_token():
+            return session["_csrf_token"]
+
+        cart_count = 0
+        if current_user.is_authenticated and not current_user.is_admin:
+            cart = Cart.query.filter_by(user_id=current_user.id).first()
+            if cart:
+                cart_count = cart.item_count
+
+        return dict(cart_count=cart_count, csrf_token=csrf_token)
 
     with app.app_context():
         db.create_all()
@@ -53,6 +78,14 @@ def create_app():
             if "phone" not in existing_columns:
                 with db.engine.connect() as conn:
                     conn.execute(text('ALTER TABLE users ADD COLUMN phone VARCHAR(20)'))
+                    conn.commit()
+
+        # Auto-migrate: add notes column to existing cart_items table if missing.
+        if inspector.has_table("cart_items"):
+            existing_columns = {col["name"] for col in inspector.get_columns("cart_items")}
+            if "notes" not in existing_columns:
+                with db.engine.connect() as conn:
+                    conn.execute(text('ALTER TABLE cart_items ADD COLUMN notes TEXT'))
                     conn.commit()
 
         # Seed default categories if the table is empty.

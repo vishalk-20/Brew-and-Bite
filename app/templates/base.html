@@ -17,6 +17,7 @@
           {% else %}
             <a href="#" class="nav-link nav-user">{{ current_user.name }}</a>
             <a href="{{ url_for('main.customer_home') }}" class="nav-link">My Account</a>
+            <a href="{{ url_for('cart.view_cart') }}" class="nav-link nav-cart">Cart <span class="cart-count">{{ cart_count }}</span></a>
           {% endif %}
           <a href="{{ url_for('auth.logout') }}" class="nav-link nav-logout">Logout</a>
         {% else %}

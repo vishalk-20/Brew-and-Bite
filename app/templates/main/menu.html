@@ -80,8 +80,12 @@
             <p class="product-description">{{ p.description }}</p>
           {% endif %}
           <span class="badge badge-veg">Vegetarian</span>
-          <button class="btn btn-primary btn-full disabled-cart" disabled type="button">
-            Coming Soon
+          <button type="button" class="btn btn-primary btn-full open-cart-modal"
+                  data-product-id="{{ p.id }}"
+                  data-product-name="{{ p.name }}"
+                  data-product-price="{{ p.price }}"
+                  data-product-image="{{ p.image or '' }}">
+            Add to Cart
           </button>
         </div>
       </article>
@@ -107,4 +111,117 @@
     {% endif %}
   </div>
 </section>
+
+<!-- Cart customization modal -->
+<div class="modal-overlay" id="cartModal" aria-hidden="true">
+  <div class="modal-container" role="dialog" aria-modal="true" aria-labelledby="cartModalTitle">
+    <button type="button" class="modal-close" id="cartModalClose" aria-label="Close">×</button>
+    <div class="modal-body">
+      <div class="modal-product">
+        <img id="modalProductImage" src="" alt="" class="modal-product-image" />
+        <div class="modal-product-info">
+          <h3 id="modalProductTitle"></h3>
+          <span id="modalProductPrice" class="price"></span>
+        </div>
+      </div>
+
+      <form id="modalAddForm" method="post" action="">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+        <div class="modal-field">
+          <label for="modalQty">Quantity</label>
+          <div class="qty-control">
+            <button type="button" class="qty-btn" id="modalQtyMinus">−</button>
+            <input type="number" id="modalQty" name="quantity" value="1" min="1" />
+            <button type="button" class="qty-btn" id="modalQtyPlus">+</button>
+          </div>
+        </div>
+
+        <div class="modal-field">
+          <label for="modalNotes">Special instructions / notes</label>
+          <textarea id="modalNotes" name="notes" rows="3" placeholder="e.g. Extra cheese, no onions"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="cartModalCancel">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-full">Add to Cart</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var modal = document.getElementById('cartModal');
+    var overlay = document.querySelector('.modal-overlay');
+    var closeBtn = document.getElementById('cartModalClose');
+    var cancelBtn = document.getElementById('cartModalCancel');
+    var form = document.getElementById('modalAddForm');
+    var qtyInput = document.getElementById('modalQty');
+    var minusBtn = document.getElementById('modalQtyMinus');
+    var plusBtn = document.getElementById('modalQtyPlus');
+
+    function openModal(productId, productName, productPrice, productImage) {
+      document.getElementById('modalProductTitle').textContent = productName;
+      document.getElementById('modalProductPrice').textContent =
+        '&#8377;' + parseFloat(productPrice || 0).toFixed(2);
+      var img = document.getElementById('modalProductImage');
+      if (productImage) {
+        img.src = '/static/uploads/' + productImage;
+        img.style.display = 'block';
+      } else {
+        img.style.display = 'none';
+      }
+      img.alt = productName;
+      qtyInput.value = 1;
+      document.getElementById('modalNotes').value = '';
+      form.action = '/cart/add/' + productId;
+
+      modal.classList.add('open');
+      overlay.classList.add('open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      modal.classList.remove('open');
+      overlay.classList.remove('open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    document.querySelectorAll('.open-cart-modal').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        openModal(
+          this.getAttribute('data-product-id'),
+          this.getAttribute('data-product-name'),
+          this.getAttribute('data-product-price'),
+          this.getAttribute('data-product-image')
+        );
+      });
+    });
+
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    overlay.addEventListener('click', function (e) {
+      if (e.target === overlay) closeModal();
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+    });
+
+    minusBtn.addEventListener('click', function () {
+      var val = parseInt(qtyInput.value, 10) || 1;
+      if (val > 1) qtyInput.value = val - 1;
+    });
+
+    plusBtn.addEventListener('click', function () {
+      var val = parseInt(qtyInput.value, 10) || 1;
+      qtyInput.value = val + 1;
+    });
+  })();
+</script>
 {% endblock %}
