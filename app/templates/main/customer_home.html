@@ -11,11 +11,47 @@
     </div>
   </div>
 
+  {% if featured %}
+  <section class="featured-section">
+    <div class="menu-container">
+      <h2>Featured Items</h2>
+      <div class="featured-grid">
+        {% for p in featured %}
+        <article class="product-card featured-card">
+          <div class="product-image-wrap">
+            {% if p.image %}
+              <img
+                src="{{ url_for('static', filename='uploads/' + p.image) }}"
+                alt="{{ p.name }}"
+                class="product-image"
+                onerror="this.style.display='none'; var ph=this.parentElement.querySelector('.img-placeholder'); if(ph){ph.style.display='flex';}"
+              />
+            {% endif %}
+            <div class="img-placeholder" style="display: {% if p.image %}none{% else %}flex{% endif %};">&#8212;</div>
+          </div>
+          <div class="product-info">
+            <h3>{{ p.name }}</h3>
+            {% if p.description %}
+              <p class="product-description">{{ p.description }}</p>
+            {% endif %}
+            <span class="price">&#8377;{{ "%.2f"|format(p.price) }}</span>
+          </div>
+        </article>
+        {% endfor %}
+      </div>
+      <div class="featured-actions">
+        <a href="{{ url_for('main.menu') }}" class="btn btn-primary">Browse Menu</a>
+        <a href="{{ url_for('main.menu') }}" class="btn btn-ghost">View Full Menu</a>
+      </div>
+    </div>
+  </section>
+  {% endif %}
+
   <div class="customer-grid">
     <div class="customer-card">
       <h2>Browse Menu</h2>
       <p>View our full menu of pizzas, burgers, shakes, beverages, desserts and snacks.</p>
-      <a href="{{ url_for('main.index') }}" class="btn btn-primary">View Menu</a>
+      <a href="{{ url_for('main.menu') }}" class="btn btn-primary">View Menu</a>
     </div>
 
     <div class="customer-card">

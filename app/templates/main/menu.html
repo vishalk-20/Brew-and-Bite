@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block body_class %}menu-page{% endblock %}
+{% block title %}Our Menu | Brew & Bite{% endblock %}
+
+{% block content %}
+<section class="menu-hero">
+  <div class="menu-container">
+    <div class="menu-hero-text">
+      <h1>Our Vegetarian Menu</h1>
+      <p>Freshly prepared, thoughtfully served.</p>
+    </div>
+  </div>
+</section>
+
+<section class="menu-filters">
+  <div class="menu-container">
+    <form method="get" action="{{ url_for('main.menu') }}" class="filter-form">
+      <input
+        type="search"
+        name="search"
+        placeholder="Search items…"
+        value="{{ search or '' }}"
+      />
+      <select name="category">
+        <option value="">All Items</option>
+        {% for c in categories %}
+          <option value="{{ c.id }}" {% if category == c.id %}selected{% endif %}>
+            {{ c.name }}
+          </option>
+        {% endfor %}
+      </select>
+      <select name="sort">
+        <option value="default" {% if sort == 'default' %}selected{% endif %}>
+          Default Sorting
+        </option>
+        <option value="price_low" {% if sort == 'price_low' %}selected{% endif %}>
+          Price: Low to High
+        </option>
+        <option value="price_high" {% if sort == 'price_high' %}selected{% endif %}>
+          Price: High to Low
+        </option>
+        <option value="name" {% if sort == 'name' %}selected{% endif %}>
+          Name: A to Z
+        </option>
+        <option value="recent" {% if sort == 'recent' %}selected{% endif %}>
+          Recently Added
+        </option>
+      </select>
+      <button type="submit" class="btn btn-primary">Apply</button>
+      {% if search or category or sort != 'default' %}
+        <a href="{{ url_for('main.menu') }}" class="btn btn-ghost">Clear</a>
+      {% endif %}
+    </form>
+  </div>
+</section>
+
+<section class="menu-list">
+  <div class="menu-container">
+    {% if products %}
+    <div class="product-grid">
+      {% for p in products %}
+      <article class="product-card">
+        <div class="product-image-wrap">
+          {% if p.image %}
+            <img
+              src="{{ url_for('static', filename='uploads/' + p.image) }}"
+              alt="{{ p.name }}"
+              class="product-image"
+              onerror="this.style.display='none'; var ph=this.parentElement.querySelector('.img-placeholder'); if(ph){ph.style.display='flex';}"
+            />
+          {% endif %}
+          <div class="img-placeholder" style="display: {% if p.image %}none{% else %}flex{% endif %};">&#8212;</div>
+        </div>
+        <div class="product-info">
+          <div class="product-header">
+            <h3>{{ p.name }}</h3>
+            <span class="price">&#8377;{{ "%.2f"|format(p.price) }}</span>
+          </div>
+          {% if p.description %}
+            <p class="product-description">{{ p.description }}</p>
+          {% endif %}
+          <span class="badge badge-veg">Vegetarian</span>
+          <button class="btn btn-primary btn-full disabled-cart" disabled type="button">
+            Coming Soon
+          </button>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+
+    {% if pagination.pages > 1 %}
+    <div class="pagination">
+      {% if pagination.has_prev %}
+        <a href="{{ url_for('main.menu', page=pagination.prev_num, search=search, category=category, sort=sort) }}" class="btn btn-ghost btn-sm">Prev</a>
+      {% endif %}
+      <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+      {% if pagination.has_next %}
+        <a href="{{ url_for('main.menu', page=pagination.next_num, search=search, category=category, sort=sort) }}" class="btn btn-ghost btn-sm">Next</a>
+      {% endif %}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="empty-state">
+      <p>No items found matching your search.</p>
+      <a href="{{ url_for('main.menu') }}" class="btn btn-primary">View All Items</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
