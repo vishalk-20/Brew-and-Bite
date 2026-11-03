@@ -2,3 +2,4 @@ Flask>=3.0,<4
 Flask-SQLAlchemy>=3.0,<4
 Flask-Login>=0.6,<1
 Werkzeug>=3.0,<4
+gunicorn>=21.0,<22

@@ -1,10 +1,14 @@
 import os
 import click
 import secrets
-from flask import Flask, session
+from flask import Flask, render_template, session
 from sqlalchemy import text, inspect
 from flask_login import current_user
 from app.extensions import db, login_manager
+
+
+def _is_production():
+    return os.environ.get("APP_ENV", "development").lower() == "production"
 
 
 def create_app():
@@ -12,8 +16,14 @@ def create_app():
 
     basedir = os.path.abspath(os.path.join(os.path.dirname(__file__), os.pardir))
 
+    _secret_key = os.environ.get("SECRET_KEY")
+    if not _secret_key:
+        if _is_production():
+            raise RuntimeError("SECRET_KEY must be set in production")
+        _secret_key = os.urandom(24)
+
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-secret-change-in-production"),
+        SECRET_KEY=_secret_key,
         SQLALCHEMY_DATABASE_URI=f"sqlite:///{os.path.join(basedir, 'instance', 'cafe.db')}",
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         UPLOAD_FOLDER=os.path.join(basedir, 'app', 'static', 'uploads'),
@@ -23,7 +33,12 @@ def create_app():
         # Secure session settings.
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
-        SESSION_COOKIE_SECURE=os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true",
+        SESSION_COOKIE_SECURE=(
+            os.environ.get(
+                "SESSION_COOKIE_SECURE", "true" if _is_production() else "false"
+            ).lower()
+            == "true"
+        ),
         PERMANENT_SESSION_LIFETIME=60 * 60 * 24 * 7,  # 7 days for "remember me"
     )
 
@@ -118,5 +133,15 @@ def create_app():
         db.session.add(user)
         db.session.commit()
         click.echo(f"Admin user created: {email}")
+
+    @app.errorhandler(404)
+    def page_not_found(exc):
+        """Render a friendly 404 page without exposing stack traces."""
+        return render_template("errors/404.html"), 404
+
+    @app.errorhandler(500)
+    def internal_server_error(exc):
+        """Render a friendly 500 page without exposing stack traces."""
+        return render_template("errors/500.html"), 500
 
     return app

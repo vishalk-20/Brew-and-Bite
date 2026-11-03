@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Something went wrong | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+  <div class="checkout-header">
+    <h1>Something went wrong</h1>
+    <p class="text-muted">
+      We&rsquo;re sorry, but something went wrong on our end. Please try again later.
+    </p>
+  </div>
+
+  <div class="form-actions" style="margin-top: 24px;">
+    <a href="{{ url_for('main.index') }}" class="btn btn-primary btn-full">Back to home</a>
+  </div>
+</div>
+{% endblock %}

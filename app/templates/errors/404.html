@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Page not found | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="checkout-page">
+  <div class="checkout-header">
+    <h1>Page not found</h1>
+    <p class="text-muted">We couldn&rsquo;t find the page you&rsquo;re looking for.</p>
+  </div>
+
+  <div class="form-actions" style="margin-top: 24px;">
+    <a href="{{ url_for('main.menu') }}" class="btn btn-primary btn-full">Browse the menu</a>
+  </div>
+</div>
+{% endblock %}
