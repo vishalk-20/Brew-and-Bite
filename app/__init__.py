@@ -44,12 +44,14 @@ def create_app():
     from app.main.routes import main_bp
     from app.cart.routes import cart_bp
     from app.orders.routes import orders_bp
+    from app.customer.routes import customer_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(admin_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(cart_bp)
     app.register_blueprint(orders_bp)
+    app.register_blueprint(customer_bp)
 
     @app.context_processor
     def inject_cart():

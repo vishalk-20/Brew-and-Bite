@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block body_class %}customer-page{% endblock %}
+{% block title %}Order {{ order.order_number }} | Brew & Bite{% endblock %}
+
+{% block content %}
+<div class="customer-page">
+  <div class="toolbar" style="justify-content: space-between; align-items: center;">
+    <div>
+      <h1>Order {{ order.order_number }}</h1>
+      <p class="text-muted">
+        Placed {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else '&#8212;' }}
+      </p>
+    </div>
+    <a href="{{ url_for('customer.orders') }}" class="btn btn-ghost">Back to orders</a>
+  </div>
+
+  <div class="checkout-grid">
+    <div class="checkout-summary">
+      <h2>Order items</h2>
+      <div class="order-items">
+        {% for item in order.items %}
+        <div class="order-item">
+          <div class="order-item-details">
+            <h3>{{ item.product_name }}</h3>
+            {% if item.special_instructions %}
+              <p class="special-instructions">{{ item.special_instructions }}</p>
+            {% endif %}
+            <p class="order-item-meta">
+              &#8377;{{ "%.2f"|format(item.unit_price) }} &times; {{ item.quantity }}
+            </p>
+          </div>
+          <span class="order-item-price">
+            &#8377;{{ "%.2f"|format(item.subtotal) }}
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div class="order-totals">
+        <div class="order-totals-row">
+          <span>Subtotal</span>
+          <span>&#8377;{{ "%.2f"|format(order.subtotal) }}</span>
+        </div>
+        <div class="order-totals-row">
+          <span>Delivery fee</span>
+          <span>&#8377;{{ "%.2f"|format(order.delivery_fee) }}</span>
+        </div>
+        <div class="order-totals-row total">
+          <span>Total amount</span>
+          <span>&#8377;{{ "%.2f"|format(order.total_amount) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="checkout-summary" style="margin-top: 0;">
+      <h2>Delivery address</h2>
+      <p>
+        <strong>{{ order.customer_name }}</strong><br />
+        {{ order.delivery_address }}
+        {% if order.landmark %}<br />(<span class="text-muted">Landmark: {{ order.landmark }}</span>){% endif %}<br />
+        {{ order.city }}, {{ order.state }} &mdash; {{ order.pin_code }}
+      </p>
+      <p>
+        <strong>Phone:</strong> {{ order.phone }}<br />
+        {% if order.delivery_instructions %}
+          <strong>Delivery instructions:</strong> {{ order.delivery_instructions }}<br />
+        {% endif %}
+        <strong>Payment method:</strong> Cash on Delivery<br />
+        <strong>Payment status:</strong>
+        <span class="badge {% if order.payment_status == 'paid' %}badge-paid{% else %}badge-pending{% endif %}">
+          {{ order.payment_status | title }}
+        </span><br />
+        <strong>Order status:</strong>
+        <span class="badge badge-status-{{ order.order_status | lower | replace(' ', '-') }}">
+          {{ order.order_status | title }}
+        </span>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
