@@ -1,0 +1,148 @@
+{% extends "admin/base.html" %}
+{% block page_title %}Order {{ order.order_number }}{% endblock %}
+
+{% block admin_content %}
+<div class="toolbar" style="justify-content: space-between; align-items: center;">
+  <div>
+    <h2>Order {{ order.order_number }}</h2>
+    <p class="text-muted">
+      Placed {{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else '&#8212;' }}
+    </p>
+  </div>
+  <a href="{{ url_for('admin.orders_list') }}" class="btn btn-ghost">Back to orders</a>
+</div>
+
+<div class="checkout-grid">
+  <!-- Customer details -->
+  <div class="checkout-summary">
+    <h2>Customer details</h2>
+    <p><strong>Name:</strong> {{ order.customer_name }}</p>
+    <p><strong>Phone:</strong> {{ order.phone }}</p>
+    <p><strong>Address:</strong> {{ order.delivery_address }}</p>
+    {% if order.landmark %}
+      <p><strong>Landmark:</strong> {{ order.landmark }}</p>
+    {% endif %}
+    <p><strong>City:</strong> {{ order.city }}</p>
+    <p><strong>State:</strong> {{ order.state }}</p>
+    <p><strong>PIN code:</strong> {{ order.pin_code }}</p>
+    {% if order.delivery_instructions %}
+      <p><strong>Delivery instructions:</strong> {{ order.delivery_instructions }}</p>
+    {% endif %}
+  </div>
+
+  <!-- Order items -->
+  <div class="checkout-summary" style="margin-top: 0;">
+    <h2>Order items</h2>
+    <div class="order-items">
+      {% for item in order.items %}
+      <div class="order-item">
+        <div class="order-item-details">
+          <h3>{{ item.product_name }}</h3>
+          {% if item.special_instructions %}
+            <p class="special-instructions">{{ item.special_instructions }}</p>
+          {% endif %}
+          <p class="order-item-meta">
+            &#8377;{{ "%.2f"|format(item.unit_price) }} &times; {{ item.quantity }}
+          </p>
+        </div>
+        <span class="order-item-price">
+          &#8377;{{ "%.2f"|format(item.subtotal) }}
+        </span>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="order-totals">
+      <div class="order-totals-row">
+        <span>Subtotal</span>
+        <span>&#8377;{{ "%.2f"|format(order.subtotal) }}</span>
+      </div>
+      <div class="order-totals-row">
+        <span>Delivery fee</span>
+        <span>&#8377;{{ "%.2f"|format(order.delivery_fee) }}</span>
+      </div>
+      <div class="order-totals-row total">
+        <span>Total amount</span>
+        <span>&#8377;{{ "%.2f"|format(order.total_amount) }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Order summary (status, payment) -->
+<div class="form-card" style="margin-top: 28px;">
+  <h2>Order summary</h2>
+  <div class="order-totals">
+    <div class="order-totals-row">
+      <span>Order number</span>
+      <span><strong>{{ order.order_number }}</strong></span>
+    </div>
+    <div class="order-totals-row">
+      <span>Order date</span>
+      <span>{{ order.created_at.strftime('%d %b %Y, %I:%M %p') if order.created_at else '&#8212;' }}</span>
+    </div>
+    <div class="order-totals-row">
+      <span>Payment method</span>
+      <span>
+        <span class="badge" style="background: var(--accent-soft); color: var(--accent);">
+          Cash on Delivery
+        </span>
+      </span>
+    </div>
+    <div class="order-totals-row">
+      <span>Payment status</span>
+      <span>
+        <span class="badge {% if order.payment_status == 'paid' %}badge-paid{% else %}badge-pending{% endif %}">
+          {{ order.payment_status | title }}
+        </span>
+      </span>
+    </div>
+    <div class="order-totals-row">
+      <span>Order status</span>
+      <span>
+        <span class="badge badge-status-{{ order.order_status | lower | replace(' ', '-') }}">
+          {{ order_status_label(order.order_status) }}
+        </span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Status update form -->
+  {% if order.order_status not in ('delivered', 'cancelled') %}
+  <form method="post" action="{{ url_for('admin.order_status_update', order_number=order.order_number) }}" style="margin-top: 20px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <div class="field" style="display: inline-block; margin-right: 10px; vertical-align: middle;">
+      <label>Update status to</label>
+      <select name="new_status">
+        {% set current = (order.order_status or 'pending').lower() %}
+        {% set allowed = {
+          'pending': ['Confirmed', 'Cancelled'],
+          'confirmed': ['Preparing', 'Cancelled'],
+          'preparing': ['Ready for Pickup', 'Cancelled'],
+          'ready for pickup': ['Out for Delivery', 'Cancelled'],
+          'out for delivery': ['Delivered', 'Cancelled'],
+        }.get(current, []) %}
+        {% for label in allowed %}
+          <option value="{{ label | lower }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <button type="submit" class="btn btn-primary btn-sm">Update</button>
+  </form>
+  {% else %}
+  <p class="text-muted" style="margin-top: 20px;">This order is {{ order.order_status | title }} and cannot be changed further.</p>
+  {% endif %}
+
+  <!-- Payment mark-paid form (COD only) -->
+  {% if order.payment_method == 'cod' and order.payment_status != 'paid' %}
+  <form method="post" action="{{ url_for('admin.order_payment_update', order_number=order.order_number) }}" style="margin-top: 20px; display: inline-block;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    <button type="submit" class="btn btn-success btn-sm">Mark as Paid</button>
+  </form>
+  {% elif order.payment_method == 'cod' and order.payment_status == 'paid' %}
+  <p class="text-muted" style="margin-top: 20px;">Payment already marked as paid.</p>
+  {% else %}
+  <p class="text-muted" style="margin-top: 20px;">Payment status is not managed through Cash on Delivery.</p>
+  {% endif %}
+</div>
+{% endblock %}

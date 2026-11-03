@@ -148,10 +148,57 @@ class Order(db.Model):
         "OrderItem", backref="order", lazy=True, cascade="all, delete-orphan"
     )
 
+    # Allowed forward-only order-status transitions.
+    # Delivered and Cancelled are final (empty sets). Cancellation is allowed
+    # from any non-final state.
+    ALLOWED_TRANSITIONS = {
+        "pending": {"confirmed", "cancelled"},
+        "confirmed": {"preparing", "cancelled"},
+        "preparing": {"ready for pickup", "cancelled"},
+        "ready for pickup": {"out for delivery", "cancelled"},
+        "out for delivery": {"delivered", "cancelled"},
+        "delivered": set(),
+        "cancelled": set(),
+    }
+
     @property
     def item_count(self):
         """Total quantity of all line items in the order."""
         return sum(item.quantity for item in self.items)
+
+    def can_transition_to(self, new_status):
+        """Return True if moving from the current status to new_status is allowed."""
+        current = (self.order_status or "pending").strip().lower()
+        target = (new_status or "").strip().lower()
+        return target in self.ALLOWED_TRANSITIONS.get(current, set())
+
+    def transition_to(self, new_status):
+        """Transition the order to new_status if allowed.
+
+        Raises ValueError with a friendly message when the transition is
+        invalid (wrong value, skipped step, backward move, or final state).
+        """
+        current = (self.order_status or "pending").strip().lower()
+        target = (new_status or "").strip().lower()
+
+        allowed = self.ALLOWED_TRANSITIONS.get(current, set())
+        if target not in allowed:
+            if current in ("delivered", "cancelled"):
+                raise ValueError(
+                    f"This order is already {current} and cannot be changed."
+                )
+            if target not in self.ALLOWED_TRANSITIONS:
+                raise ValueError(f"'{new_status}' is not a valid order status.")
+            if allowed:
+                allowed_text = ", ".join(sorted(allowed))
+            else:
+                allowed_text = "none (final)"
+            raise ValueError(
+                f"Cannot move an order from '{current}' to '{target}'. "
+                f"Allowed next statuses: {allowed_text}."
+            )
+
+        self.order_status = new_status
 
     def __repr__(self):
         return f"<Order {self.order_number}>"

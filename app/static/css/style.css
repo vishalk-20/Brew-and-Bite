@@ -797,6 +797,46 @@ p {
   background: var(--danger-bg);
   color: var(--danger);
 }
+
+/* Order status badges */
+.badge-status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-status-confirmed {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge-status-preparing {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+.badge-status-ready-for-pickup {
+  background: #ccfbf1;
+  color: #115e59;
+}
+.badge-status-out-for-delivery {
+  background: #dbeafe;
+  color: #1e40af;
+}
+.badge-status-delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+.badge-status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Payment status badges */
+.badge-paid {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.badge-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
 .actions {
   display: flex;
   gap: 6px;

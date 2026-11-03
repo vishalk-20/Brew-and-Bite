@@ -1,0 +1,99 @@
+{% extends "admin/base.html" %}
+{% block page_title %}Orders{% endblock %}
+
+{% block admin_content %}
+<div class="toolbar">
+  <form method="get" action="{{ url_for('admin.orders_list') }}" class="search-form">
+    <input type="search" name="search" placeholder="Search order number, customer, or phone…" value="{{ search or '' }}" />
+    <select name="status">
+      <option value="">All statuses</option>
+      {% for key, label in [
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("preparing", "Preparing"),
+        ("ready for pickup", "Ready for Pickup"),
+        ("out for delivery", "Out for Delivery"),
+        ("delivered", "Delivered"),
+        ("cancelled", "Cancelled"),
+      ] %}
+        <option value="{{ key }}" {% if status_filter == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="payment">
+      <option value="">All payment statuses</option>
+      <option value="pending" {% if payment_filter == "pending" %}selected{% endif %}>Pending</option>
+      <option value="paid" {% if payment_filter == "paid" %}selected{% endif %}>Paid</option>
+    </select>
+    <button type="submit" class="btn btn-primary">Filter</button>
+    {% if search or status_filter or payment_filter %}
+      <a href="{{ url_for('admin.orders_list') }}" class="btn btn-ghost">Clear</a>
+    {% endif %}
+  </form>
+  <a href="{{ url_for('admin.orders_list') }}" class="btn btn-ghost">All Orders</a>
+</div>
+
+<div class="table-wrap">
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Order Number</th>
+        <th>Customer</th>
+        <th>Phone</th>
+        <th>Date</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Payment Method</th>
+        <th>Payment</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for order in orders %}
+      <tr>
+        <td><strong>{{ order.order_number }}</strong></td>
+        <td>{{ order.customer_name }}</td>
+        <td>{{ order.phone }}</td>
+        <td class="text-muted">{{ order.created_at.strftime('%d %b %Y') if order.created_at else '&#8212;' }}</td>
+        <td>{{ order.item_count }}</td>
+        <td>&#8377;{{ "%.2f"|format(order.total_amount) }}</td>
+        <td>
+          <span class="badge" style="background: var(--accent-soft); color: var(--accent);">
+            {{ 'Cash on Delivery' if order.payment_method == 'cod' else order.payment_method | title }}
+          </span>
+        </td>
+        <td>
+          <span class="badge {% if order.payment_status == 'paid' %}badge-paid{% else %}badge-pending{% endif %}">
+            {{ order.payment_status | title }}
+          </span>
+        </td>
+        <td>
+          <span class="badge badge-status-{{ order.order_status | lower | replace(' ', '-') }}">
+            {{ order_status_label(order.order_status) }}
+          </span>
+        </td>
+        <td class="actions">
+          <a href="{{ url_for('admin.order_detail', order_number=order.order_number) }}" class="btn btn-sm btn-outline">View Details</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="10" class="empty">No orders found.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ url_for('admin.orders_list', page=pagination.prev_num, search=search, status=status_filter, payment=payment_filter) }}" class="btn btn-ghost btn-sm">Prev</a>
+  {% endif %}
+  <span class="page-info">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ url_for('admin.orders_list', page=pagination.next_num, search=search, status=status_filter, payment=payment_filter) }}" class="btn btn-ghost btn-sm">Next</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

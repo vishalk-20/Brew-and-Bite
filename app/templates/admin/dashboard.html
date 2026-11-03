@@ -19,6 +19,22 @@
     <div class="stat-label">Total categories</div>
     <div class="stat-value">{{ total_categories }}</div>
   </div>
+  <div class="stat-card">
+    <div class="stat-label">Total orders</div>
+    <div class="stat-value">{{ total_orders }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending orders</div>
+    <div class="stat-value">{{ pending_orders }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">In progress</div>
+    <div class="stat-value">{{ in_progress_orders }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Delivered</div>
+    <div class="stat-value success">{{ delivered_orders }}</div>
+  </div>
 </div>
 
 <div class="quick-actions">
@@ -26,6 +42,51 @@
   <div class="action-grid">
     <a href="{{ url_for('admin.menu_add') }}" class="btn btn-primary">Add Menu Item</a>
     <a href="{{ url_for('admin.menu_list') }}" class="btn btn-outline">Manage Menu</a>
+    <a href="{{ url_for('admin.orders_list') }}" class="btn btn-outline">View All Orders</a>
   </div>
 </div>
+
+{% if recent_orders %}
+<div style="margin-top: 28px;">
+  <h2>Recent orders</h2>
+  <div class="table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Order Number</th>
+          <th>Customer</th>
+          <th>Total</th>
+          <th>Status</th>
+          <th>Payment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for order in recent_orders %}
+        <tr>
+          <td><strong>{{ order.order_number }}</strong></td>
+          <td>{{ order.customer_name }}</td>
+          <td>&#8377;{{ "%.2f"|format(order.total_amount) }}</td>
+          <td>
+            <span class="badge badge-status-{{ order.order_status | lower | replace(' ', '-') }}">
+              {{ order_status_label(order.order_status) }}
+            </span>
+          </td>
+          <td>
+            <span class="badge {% if order.payment_status == 'paid' %}badge-paid{% else %}badge-pending{% endif %}">
+              {{ order.payment_status | title }}
+            </span>
+          </td>
+          <td class="actions">
+            <a href="{{ url_for('admin.order_detail', order_number=order.order_number) }}" class="btn btn-sm btn-outline">View</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <a href="{{ url_for('admin.orders_list') }}" class="btn btn-ghost btn-sm">View all orders</a>
+</div>
+{% endif %}
 {% endblock %}
+
