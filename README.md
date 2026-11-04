@@ -213,7 +213,4 @@ Brew-and-Bite/
 
 ---
 
-## 10. License
 
-Add your license here if you have one (e.g., MIT, Apache-2.0). If you don't
-want one, you can remove this section — by default, all rights are reserved.
