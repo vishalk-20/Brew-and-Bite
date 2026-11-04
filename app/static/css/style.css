@@ -1060,6 +1060,46 @@ p {
   outline: 2px solid var(--accent);
   border-color: transparent;
 }
+
+/* ---- Category filter buttons ---- */
+.category-filters {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: center;
+}
+.category-btn {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--ground);
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1;
+}
+.category-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  border-color: transparent;
+}
+.category-btn.is-active {
+  background: var(--accent);
+  color: var(--ground);
+  border-color: var(--accent);
+}
+.filter-clear {
+  flex-basis: 100%;
+}
+@media (max-width: 640px) {
+  .category-filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+}
 @media (max-width: 640px) {
   .filter-form input[type="search"],
   .filter-form select {
