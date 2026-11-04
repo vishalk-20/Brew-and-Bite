@@ -33,7 +33,7 @@ def admin_required(f):
     def decorated(*args, **kwargs):
         if not current_user.is_authenticated:
             flash("Please log in as admin to access this page.", "warning")
-            return redirect(url_for("auth.login", next=request.url))
+            return redirect(url_for("admin.login", next=request.url))
         if not current_user.is_admin:
             abort(403)
         return f(*args, **kwargs)
@@ -41,6 +41,25 @@ def admin_required(f):
 
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
+
+
+@admin_bp.route("/login", methods=["GET"])
+def login():
+    """Admin login page.
+
+    Renders an admin-branded login form. The form posts to the shared
+    ``auth.login`` handler, which validates CSRF + credentials and already
+    sends authenticated admins to the admin dashboard. This route only
+    handles GET; already-authenticated users are sent onward so a logged-in
+    customer can never use it to gain admin access.
+    """
+    if current_user.is_authenticated:
+        if current_user.is_admin:
+            return redirect(url_for("admin.dashboard"))
+        # Logged in as a customer: do not grant admin access.
+        return redirect(url_for("main.customer_home"))
+
+    return render_template("admin/login.html", next=request.args.get("next", ""))
 
 
 @admin_bp.route("/")

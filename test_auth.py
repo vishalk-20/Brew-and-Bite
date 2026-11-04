@@ -352,6 +352,150 @@ def test_admin_functionality_unaffected():
     print("PASS: 14. Existing admin functionality remains unaffected.")
 
 
+# ---------------------------------------------------------------------------
+# 15. Admin login page is reachable and is clearly for admins.
+# ---------------------------------------------------------------------------
+def test_admin_login_page():
+    client = test_client()
+    resp = client.get("/admin/login", follow_redirects=False)
+    assert resp.status_code == 200, f"Expected 200, got {resp.status_code}"
+    body = resp.get_data(as_text=True)
+    assert "Admin login" in body, f"Expected 'Admin login' heading, got: {body[:200]}"
+    assert "customer account" not in body.lower(), "Admin login page should not say customer account"
+    assert 'action="/login"' in body, "Admin form should submit to the shared login handler"
+    assert 'name="csrf_token" value="' in body, "Admin login form should include a CSRF token"
+    print("PASS: 15. Admin login page is reachable and is clearly for admins.")
+
+
+# ---------------------------------------------------------------------------
+# 16. Admin login flow requires a valid CSRF token.
+# ---------------------------------------------------------------------------
+def test_admin_login_csrf_required():
+    client = test_client()
+    resp = client.get("/admin/login", follow_redirects=False)
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    # The admin form posts to /login; CSRF is validated there.
+    resp = client.post("/login", data={
+        "email": "admintest@test.com",
+        "password": "adminpass123",
+        "next": "/admin/",
+    }, follow_redirects=False)
+    assert resp.status_code == 400, f"Expected 400 for missing CSRF, got {resp.status_code}"
+    print("PASS: 16. Admin login flow requires a valid CSRF token.")
+
+
+# ---------------------------------------------------------------------------
+# 17. next is preserved through admin login; open-redirect protection kept.
+# ---------------------------------------------------------------------------
+def test_admin_login_next_preserved():
+    client = test_client()
+    with app.app_context():
+        from app.models import User
+        from app.extensions import db
+        admin = User.query.filter_by(email="nextadmin@test.com").first()
+        if not admin:
+            admin = User(name="Next Admin", email="nextadmin@test.com", role="admin")
+            admin.set_password("adminpass123")
+            db.session.add(admin)
+            db.session.commit()
+
+    resp = client.get("/admin/login?next=/admin/orders", follow_redirects=False)
+    assert resp.status_code == 200
+    body = resp.get_data(as_text=True)
+    assert 'name="next" value="/admin/orders"' in body, "next should be rendered in the admin login form"
+
+    token = re.search(r'name="csrf_token" value="([^"]+)"', body).group(1)
+    resp = client.post("/login", data={
+        "csrf_token": token,
+        "email": "nextadmin@test.com",
+        "password": "adminpass123",
+        "next": "/admin/orders",
+    }, follow_redirects=False)
+    assert resp.status_code in (302,), f"Expected redirect, got {resp.status_code}"
+    assert "/admin/orders" in resp.headers.get("Location", ""), f"Expected redirect to next, got {resp.headers.get('Location')}"
+    print("PASS: 17. next is preserved through admin login.")
+
+
+# ---------------------------------------------------------------------------
+# 18. Admin can log in via the admin login page and reaches the dashboard.
+# ---------------------------------------------------------------------------
+def test_admin_login_via_admin_page():
+    client = test_client()
+    with app.app_context():
+        from app.models import User
+        from app.extensions import db
+        admin = User.query.filter_by(email="pageadmin@test.com").first()
+        if not admin:
+            admin = User(name="Page Admin", email="pageadmin@test.com", role="admin")
+            admin.set_password("adminpass123")
+            db.session.add(admin)
+            db.session.commit()
+
+    token = _csrf(client, "/admin/login")
+    resp = client.post("/login", data={
+        "csrf_token": token,
+        "email": "pageadmin@test.com",
+        "password": "adminpass123",
+        "next": "/admin/",
+    }, follow_redirects=False)
+    assert resp.status_code in (302,), f"Expected redirect, got {resp.status_code}"
+    assert "/admin" in resp.headers.get("Location", ""), f"Expected redirect to admin, got {resp.headers.get('Location')}"
+    print("PASS: 18. Admin can log in via the admin login page and reaches the dashboard.")
+
+
+# ---------------------------------------------------------------------------
+# 19. Already-authenticated admin is redirected to the dashboard.
+# ---------------------------------------------------------------------------
+def test_authenticated_admin_redirects_to_dashboard():
+    client = test_client()
+    with app.app_context():
+        from app.models import User
+        from app.extensions import db
+        admin = User.query.filter_by(email="dashadmin@test.com").first()
+        if not admin:
+            admin = User(name="Dash Admin", email="dashadmin@test.com", role="admin")
+            admin.set_password("adminpass123")
+            db.session.add(admin)
+            db.session.commit()
+    client.post("/login", data={
+        "csrf_token": _csrf(client, "/login"),
+        "email": "dashadmin@test.com",
+        "password": "adminpass123",
+    }, follow_redirects=False)
+    resp = client.get("/admin/login", follow_redirects=False)
+    assert resp.status_code in (302,), f"Expected redirect, got {resp.status_code}"
+    assert "/admin/" in resp.headers.get("Location", ""), f"Expected redirect to dashboard, got {resp.headers.get('Location')}"
+    print("PASS: 19. Already-authenticated admin is redirected to the dashboard.")
+
+
+# ---------------------------------------------------------------------------
+# 20. Logged-in customer is not granted admin access on /admin/login.
+# ---------------------------------------------------------------------------
+def test_customer_not_granted_admin_access():
+    client = test_client()
+    email = f"custpage{TS}@example.com"
+    client.post("/register", data={
+        "csrf_token": _csrf(client, "/register"),
+        "name": "Cust Page Test",
+        "email": email,
+        "phone": "+1 555-0123",
+        "password": "securepass123",
+        "confirm_password": "securepass123",
+        "terms": "on",
+    }, follow_redirects=False)
+    client.post("/login", data={
+        "csrf_token": _csrf(client, "/login"),
+        "email": email,
+        "password": "securepass123",
+    }, follow_redirects=False)
+    resp = client.get("/admin/login", follow_redirects=False)
+    assert resp.status_code in (302,), f"Expected redirect, got {resp.status_code}"
+    loc = resp.headers.get("Location", "")
+    assert "/admin" not in loc, f"Customer should not be sent into admin area, got {loc}"
+    print("PASS: 20. Logged-in customer is not granted admin access on /admin/login.")
+
+
 if __name__ == "__main__":
     tests = [
         test_customer_register_success,
@@ -367,6 +511,12 @@ if __name__ == "__main__":
         test_customer_cannot_access_admin_routes,
         test_navigation_changes,
         test_admin_functionality_unaffected,
+        test_admin_login_page,
+        test_admin_login_csrf_required,
+        test_admin_login_next_preserved,
+        test_admin_login_via_admin_page,
+        test_authenticated_admin_redirects_to_dashboard,
+        test_customer_not_granted_admin_access,
     ]
     passed = 0
     failed = 0

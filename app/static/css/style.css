@@ -236,7 +236,7 @@ p {
   gap: 24px;
   flex-wrap: wrap;
 }
-.nav-link {
+.top-nav .nav-link {
   padding: 8px 14px;
   border-radius: var(--radius);
   font-size: 0.95rem;
@@ -244,7 +244,7 @@ p {
   color: #1b110a !important;
   text-decoration: none;
 }
-.nav-link:hover {
+.top-nav .nav-link:hover {
   background: var(--surface) !important;
   text-decoration: none;
   color: #1b110a !important;
